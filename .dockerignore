@@ -1,0 +1,6 @@
+*.md
+.git
+.gitignore
+feriados-api
+*.log
+.DS_Store
