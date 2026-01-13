@@ -1,4 +1,4 @@
-package main
+package scraper
 
 import (
 	"fmt"
@@ -7,9 +7,10 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/franpfeiffer/feriados-scraper/internal/models"
 )
 
-const feriadosUrl = "https://www.bcra.gob.ar/consulta-feriados-bancarios/"
+const feriadosURL = "https://www.bcra.gob.ar/consulta-feriados-bancarios/"
 
 type FeriadoScraper struct {
 	client *http.Client
@@ -23,10 +24,10 @@ func NewFeriadoScraper() *FeriadoScraper {
 	}
 }
 
-func (s *FeriadoScraper) GetFeriados() ([]Feriado, error) {
-	resp, err := s.client.Get(feriadosUrl)
+func (s *FeriadoScraper) GetFeriados() ([]models.Feriado, error) {
+	resp, err := s.client.Get(feriadosURL)
 	if err != nil {
-		return nil, fmt.Errorf("error on request: %w", err)
+		return nil, fmt.Errorf("request error: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -36,29 +37,34 @@ func (s *FeriadoScraper) GetFeriados() ([]Feriado, error) {
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing html: %w", err)
+		return nil, fmt.Errorf("html parse error: %w", err)
 	}
 
-	var feriados []Feriado
+	var feriados []models.Feriado
 	currentYear := time.Now().Year()
 
 	doc.Find("table tr").Each(func(i int, row *goquery.Selection) {
 		if i == 0 {
 			return
 		}
-		cols := row.Find("td")
-		if cols.Length() >= 2 {
-			dateText := strings.TrimSpace(cols.Eq(0).Text())
-			description := strings.TrimSpace(cols.Eq(1).Text())
 
-			date, err := parseDate(dateText, currentYear)
-			if err == nil {
-				feriados = append(feriados, Feriado{
-					Date:        date,
-					Description: description,
-				})
-			}
+		cols := row.Find("td")
+		if cols.Length() < 2 {
+			return
 		}
+
+		dateText := strings.TrimSpace(cols.Eq(0).Text())
+		description := strings.TrimSpace(cols.Eq(1).Text())
+
+		date, err := parseDate(dateText, currentYear)
+		if err != nil {
+			return
+		}
+
+		feriados = append(feriados, models.Feriado{
+			Date:        date,
+			Description: description,
+		})
 	})
 
 	return feriados, nil
@@ -93,11 +99,11 @@ func parseDate(text string, year int) (time.Time, error) {
 		}
 	}
 
-	month, exists := months[monthName]
-	if !exists {
-		return time.Time{}, fmt.Errorf("unrecognized month: %s", monthName)
+	month, ok := months[monthName]
+	if !ok {
+		return time.Time{}, fmt.Errorf("unknown month: %s", monthName)
 	}
 
-	date := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
-	return date, nil
+	return time.Date(year, month, day, 0, 0, 0, 0, time.UTC), nil
 }
+

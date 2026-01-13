@@ -6,16 +6,20 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/franpfeiffer/feriados-scraper/internal/cache"
+	"github.com/franpfeiffer/feriados-scraper/internal/models"
+	"github.com/franpfeiffer/feriados-scraper/internal/scraper"
 )
 
 var (
-	scraper *FeriadoScraper
-	cache   *Cache
+	feriadoScraper *scraper.FeriadoScraper
+	feriadoCache   *cache.Cache
 )
 
 func main() {
-	scraper = NewFeriadoScraper()
-	cache = NewCache(24 * time.Hour)
+	feriadoScraper = scraper.NewFeriadoScraper()
+	feriadoCache = cache.NewCache(24 * time.Hour)
 
 	http.HandleFunc("/api/feriados", handleFeriados)
 	http.HandleFunc("/api/health", handleHealth)
@@ -34,26 +38,27 @@ func handleFeriados(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	feriados, found := cache.Get()
+	feriados, found := feriadoCache.Get()
 	if !found {
 		log.Println("no cache, scraping...")
 		var err error
-		feriados, err = scraper.GetFeriados()
+		feriados, err = feriadoScraper.GetFeriados()
 		if err != nil {
 			log.Printf("error grabbing feriados: %v", err)
 			http.Error(w, fmt.Sprintf("error grabbing feriados: %v", err), http.StatusInternalServerError)
 			return
 		}
 
-		cache.Set(feriados)
+		feriadoCache.Set(feriados)
 		log.Printf("feriados grabbed and stored in cache: %d feriados", len(feriados))
 	} else {
-		log.Println("yes cache, here we go...")
+		log.Println("cache hit")
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	json.NewEncoder(w).Encode(map[string]interface{any}{
+
+	json.NewEncoder(w).Encode(map[string]any{
 		"feriados": feriados,
 		"total":    len(feriados),
 	})

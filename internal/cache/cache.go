@@ -1,12 +1,14 @@
-package main
+package cache
 
 import (
 	"sync"
 	"time"
+
+	"github.com/franpfeiffer/feriados-scraper/internal/models"
 )
 
 type Cache struct {
-	feriados   []Feriado
+	feriados   []models.Feriado
 	lastUpdate time.Time
 	ttl        time.Duration
 	mu         sync.RWMutex
@@ -18,7 +20,7 @@ func NewCache(ttl time.Duration) *Cache {
 	}
 }
 
-func (c *Cache) Get() ([]Feriado, bool) {
+func (c *Cache) Get() ([]models.Feriado, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -29,7 +31,7 @@ func (c *Cache) Get() ([]Feriado, bool) {
 	return nil, false
 }
 
-func (c *Cache) Set(feriados []Feriado) {
+func (c *Cache) Set(feriados []models.Feriado) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -44,3 +46,4 @@ func (c *Cache) Invalidate() {
 	c.feriados = nil
 	c.lastUpdate = time.Time{}
 }
+
