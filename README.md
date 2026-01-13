@@ -2,4 +2,3 @@
 
 info: https://www.bcra.gob.ar/consulta-feriados-bancarios/
 
-endpoint: /api/feriados
