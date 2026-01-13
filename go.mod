@@ -1,4 +1,4 @@
-module franpfeiffer/feriados-scrapping
+module github.com/franpfeiffer/feriados-scraper
 
 go 1.25.5
 
