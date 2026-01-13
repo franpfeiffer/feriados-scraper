@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/franpfeiffer/feriados-scraper/internal/cache"
-	"github.com/franpfeiffer/feriados-scraper/internal/models"
 	"github.com/franpfeiffer/feriados-scraper/internal/scraper"
 )
 
