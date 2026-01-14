@@ -25,17 +25,17 @@ func NewFeriadoScraper() *FeriadoScraper {
 }
 
 func (s *FeriadoScraper) GetFeriados() ([]models.Feriado, error) {
-	resp, err := s.client.Get(feriadosURL)
+	res, err := s.client.Get(feriadosURL)
 	if err != nil {
 		return nil, fmt.Errorf("request error: %w", err)
 	}
-	defer resp.Body.Close()
+	defer res.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("status code error: %d %s", resp.StatusCode, resp.Status)
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("status code error: %d %s", res.StatusCode, res.Status)
 	}
 
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
 		return nil, fmt.Errorf("html parse error: %w", err)
 	}
